@@ -1,34 +1,33 @@
-import logging
-import logging.handlers
 import os
-
 import requests
+from bs4 import BeautifulSoup
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger_file_handler = logging.handlers.RotatingFileHandler(
-    "status.log",
-    maxBytes=1024 * 1024,
-    backupCount=1,
-    encoding="utf8",
-)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger_file_handler.setFormatter(formatter)
-logger.addHandler(logger_file_handler)
+TOKEN = '5481103194:AAG4QwvLnZ7k1_7NeLXxLh4226bFFHVqhiw'
+CHAT_IDS = [1276109349]
+def check():
+    url = 'https://ww2.5movierulz.mx/telugu-movie/'
+    req = requests.get(url).content
+    soup = BeautifulSoup(req,'html.parser')
+    divs = soup.find_all("div",class_="cont_display")
+    f = open("data.txt", "r").read()
+    title = divs[2].find("a")['title'].replace(" Watch Online Free",'')
+    image =  divs[2].find("img")['src']
+    link = divs[2].find("a")['href']
+    if title == f:
+        pass
+    else:
+        caption = "**New Movie**\n`{}`\n\n{}".format(title,link)
+        for CHAT_ID in CHAT_IDS:
+            send_message(CHAT_ID,caption,image)
+        os.remove("data.txt")
+        f = open("data.txt", "a")
+        f.write(title)
+        f.close()
 
-try:
-    SOME_SECRET = os.environ["SOME_SECRET"]
-except KeyError:
-    SOME_SECRET = "Token not available!"
-    #logger.info("Token not available!")
-    #raise
 
+def send_message(CHAT_ID,caption,img):
+    url = f"https://api.telegram.org/bot{TOKEN}/sendPhoto?chat_id={CHAT_ID}&photo={img}&caption={caption}&parse_mode=MARKDOWN"
+    requests.post(url)
 
 if __name__ == "__main__":
-    logger.info(f"Token value: {SOME_SECRET}")
-
-    r = requests.get('https://weather.talkpython.fm/api/weather/?city=Berlin&country=DE')
-    if r.status_code == 200:
-        data = r.json()
-        temperature = data["forecast"]["temp"]
-        logger.info(f'Weather in Berlin: {temperature}')
+    check()
